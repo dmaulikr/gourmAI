@@ -7,5 +7,6 @@ target 'Gourmai' do
 
   # Pods for Gourmai
   pod 'Firebase/Core'
+  pod 'ImagePicker'
 
 end
