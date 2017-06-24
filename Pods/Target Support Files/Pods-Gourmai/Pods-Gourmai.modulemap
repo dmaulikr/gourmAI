@@ -1,0 +1,6 @@
+framework module Pods_Gourmai {
+  umbrella header "Pods-Gourmai-umbrella.h"
+
+  export *
+  module * { export * }
+}
