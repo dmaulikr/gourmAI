@@ -1,0 +1,2 @@
+# gourmAI
+Global AI Hackathon
