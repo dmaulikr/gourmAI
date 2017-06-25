@@ -30,7 +30,7 @@ class HomeVC: UIViewController {
         self.navigationController?.pushViewController(takePicVC, animated: true)
     }
     
-    func setupViews() {
+    private func setupViews() {
         let margins = view.layoutMarginsGuide
         let navBarHeight = self.navigationController?.navigationBar.frame.height
         let topMargin = navBarHeight! + 8
@@ -46,6 +46,9 @@ class HomeVC: UIViewController {
         takePicButton.trailingAnchor.constraint(equalTo: margins.trailingAnchor, constant: 8).isActive = true
         takePicButton.topAnchor.constraint(equalTo: margins.topAnchor, constant: topMargin + 20).isActive = true
         takePicButton.bottomAnchor.constraint(equalTo: margins.centerYAnchor, constant: 8).isActive = true
+        
+        navigationController?.setNavigationBarHidden(false, animated: true)
+        navigationItem.setHidesBackButton(true, animated: false)
     }
     
 }
