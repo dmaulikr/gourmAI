@@ -8,10 +8,16 @@
 
 import UIKit
 import ImagePicker
+import Clarifai
 
 class TakePicVC: UIViewController {
     
     let imagePickerController = ImagePickerController()
+    
+    var currentOption: CardOption?
+    
+    var clarifaiView: UIView!
+    var clarifaiImage: UIImage!
     
     //CardSlider
     var cards = [ImageCard]()
@@ -179,15 +185,18 @@ class TakePicVC: UIViewController {
                     } else {
                         emojiOptionsOverlay.updateHeartEmoji(isFilled: true, isFocused: false)
                     }
+                    currentOption = .like1
                     
                 } else if cards[0].center.y > (self.view.center.y + optionLength) {
                     cards[0].showOptionLabel(option: .like3)
                     emojiOptionsOverlay.showEmoji(for: .like3)
                     emojiOptionsOverlay.updateHeartEmoji(isFilled: false, isFocused: false)
+                    currentOption = .like3
                 } else {
                     cards[0].showOptionLabel(option: .like2)
                     emojiOptionsOverlay.showEmoji(for: .like2)
                     emojiOptionsOverlay.updateHeartEmoji(isFilled: false, isFocused: false)
+                    currentOption = .like2
                 }
             } else if cards[0].center.x < (self.view.center.x - requiredOffsetFromCenter) {
                 
@@ -196,21 +205,27 @@ class TakePicVC: UIViewController {
                 if cards[0].center.y < (self.view.center.y - optionLength) {
                     cards[0].showOptionLabel(option: .dislike1)
                     emojiOptionsOverlay.showEmoji(for: .dislike1)
+                    currentOption = .dislike1
                 } else if cards[0].center.y > (self.view.center.y + optionLength) {
                     cards[0].showOptionLabel(option: .dislike3)
                     emojiOptionsOverlay.showEmoji(for: .dislike3)
+                    currentOption = .dislike3
                 } else {
                     cards[0].showOptionLabel(option: .dislike2)
                     emojiOptionsOverlay.showEmoji(for: .dislike2)
+                    currentOption = .dislike2
                 }
             } else {
                 cards[0].hideOptionLabel()
                 emojiOptionsOverlay.hideFaceEmojis()
+                currentOption = nil
             }
             
         case .ended:
             
             dynamicAnimator.removeAllBehaviors()
+            
+            print(currentOption)
             
             if emojiOptionsOverlay.heartIsFocused {
                 // animate card to get "swallowed" by heart
@@ -270,9 +285,63 @@ class TakePicVC: UIViewController {
                     
                 }
             }
+            
+            prepareForClarifai()
+            
         default:
             break
         }
+    }
+    
+    func prepareForClarifai() {
+        let margins = view.layoutMarginsGuide
+        let navBarHeight = self.navigationController?.navigationBar.frame.height
+        let topMargin = navBarHeight! + 8
+        
+        clarifaiView = UIView()
+        clarifaiView.translatesAutoresizingMaskIntoConstraints = false
+        clarifaiView.backgroundColor = UIColor.green
+        clarifaiView.layer.cornerRadius = 15
+        view.addSubview(clarifaiView)
+        
+        clarifaiView.leadingAnchor.constraint(equalTo: margins.leadingAnchor, constant: 0).isActive = true
+        clarifaiView.trailingAnchor.constraint(equalTo: margins.trailingAnchor, constant: 0).isActive = true
+        clarifaiView.topAnchor.constraint(equalTo: margins.topAnchor, constant: topMargin + 20).isActive = true
+        clarifaiView.bottomAnchor.constraint(equalTo: margins.bottomAnchor, constant: -8).isActive = true
+        
+        handleClarifaiAPI()
+        
+    }
+    
+    func handleClarifaiAPI() {
+        //CALL CLARIFAI API HERE.
+        
+        //get access token
+        let app = ClarifaiApp(appID: "DzmAkw_UztR88_XiUz-n909nf2COuI_TgQMS550n", appSecret: "JA1PCl_ce92CR-2UNPtJZ0Ij15KtC9EtfnJcIpT2")
+        print(app?.accessToken)
+        
+        app?.getModelByID("gourmetAI", completion: { (model, error) in
+            if error != nil {
+                print("THERE WAS AN ERROR")
+                return
+            }
+            //USE MODEL HERE
+            print(model)
+            var image = [ClarifaiImage]()
+            image.append(ClarifaiImage(image: self.clarifaiImage))
+            model?.predict(on: image, completion: { (output, error) in
+                if error != nil {
+                    print("THERE WAS AN ERROR")
+                    return
+                }
+                let data = output![0]
+                for concept in data.concepts {
+                    print(concept.conceptName)
+                }
+            })
+        })
+        
+        
     }
     
     /// This function continuously checks to see if the card's center is on the screen anymore. If it finds that the card's center is not on screen, then it triggers removeOldFrontCard() which removes the front card from the data structure and from the view.
@@ -320,7 +389,7 @@ extension TakePicVC: ImagePickerDelegate {
         let card = ImageCard(frame: CGRect(x: 0, y: 0, width: self.view.frame.width - 60, height: self.view.frame.height * 0.6), image: image!)
         cards.append(card)
         layoutCards()
-//        postImage.image = image
+        clarifaiImage = image!
         dismiss(animated: true, completion: nil)
     }
     
